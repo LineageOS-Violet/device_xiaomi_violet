@@ -135,9 +135,6 @@ drm.service.enabled=true
 # FM
 vendor.hw.fm.init=0
 
-# Factory Reset Protection
-ro.frp.pst=/dev/block/bootdevice/by-name/frp
-
 # FS-verity
 ro.apk_verity.mode=2
 
