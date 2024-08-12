@@ -6,9 +6,9 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/superior_violet.mk
+    $(LOCAL_DIR)/lineage_violet.mk
 
 COMMON_LUNCH_CHOICES := \
-    superior_violet-ap1a-eng \
-    superior_violet-ap1a-userdebug \
-    superior_violet-ap1a-user
+    lineage_violet-eng \
+    lineage_violet-userdebug \
+    lineage_violet-user
