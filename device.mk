@@ -355,10 +355,6 @@ PRODUCT_PACKAGES += \
     init.recovery.qcom.rc \
     ueventd.qcom.rc
 
-# Recovery
-PRODUCT_PACKAGES += \
-    librecovery_updater_xiaomi
-
 # RCS
 PRODUCT_PACKAGES += \
     com.android.ims.rcsmanager \
