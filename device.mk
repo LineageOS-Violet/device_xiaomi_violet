@@ -157,7 +157,9 @@ PRODUCT_PACKAGES += \
 
 # Config Store
 PRODUCT_PACKAGES += \
-    disable_configstore
+    disable_configstore \
+    vendor.qti.hardware.capabilityconfigstore@1.0 \
+    vendor.qti.hardware.capabilityconfigstore@1.0.vendor
 
 # Device-specific settings
 PRODUCT_PACKAGES += \
