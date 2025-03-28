@@ -1,103 +1,111 @@
-#!/bin/bash
+# Default to sanitizing the vendor folder before extraction
+#!/usr/bin/env -S PYTHONPATH=../../../tools/extract-utils python3
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
-#
+# SPDX-FileCopyrightText: 2024 The LineageOS Project
 # SPDX-License-Identifier: Apache-2.0
 #
 
-set -e
+from extract_utils.file import File
+from extract_utils.fixups_blob import (
+    BlobFixupCtx,
+    blob_fixup,
+    blob_fixups_user_type,
+)
+from extract_utils.fixups_lib import (
+    lib_fixup_remove,
+    lib_fixups,
+    lib_fixups_user_type,
+)
+from extract_utils.main import (
+    ExtractUtils,
+    ExtractUtilsModule,
+)
 
-DEVICE=violet
-VENDOR=xiaomi
+# Define namespace imports relevant to the device
+namespace_imports = [
+    'device/xiaomi/violet',
+    'hardware/qcom-caf/sm6150',
+    'hardware/qcom-caf/wlan',
+    'hardware/xiaomi',
+    'vendor/qcom/opensource/commonsys/display',
+    'vendor/qcom/opensource/commonsys-intf/display',
+    'vendor/qcom/opensource/dataservices',
+    'vendor/qcom/opensource/display',
+]
 
-DEVICE_BRINGUP_YEAR=2020
+# Define library fix-ups specific to the device
+def lib_fixup_vendor_suffix(lib: str, partition: str, *args, **kwargs):
+    return f'{lib}_{partition}' if partition == 'vendor' else None
 
-# Load extract_utils and do some sanity checks
-MY_DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
-
-ANDROID_ROOT="${MY_DIR}/../../.."
-
-export TARGET_ENABLE_CHECKELF=false
-
-HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
-if [ ! -f "${HELPER}" ]; then
-    echo "Unable to find helper script at ${HELPER}"
-    exit 1
-fi
-source "${HELPER}"
-
-# Default to sanitizing the vendor folder before extraction
-CLEAN_VENDOR=true
-
-SECTION=
-KANG=
-
-while [ "${#}" -gt 0 ]; do
-    case "${1}" in
-        -n | --no-cleanup )
-                CLEAN_VENDOR=false
-                ;;
-        -k | --kang )
-                KANG="--kang"
-                ;;
-        -s | --section )
-                SECTION="${2}"; shift
-                CLEAN_VENDOR=false
-                ;;
-        * )
-                SRC="${1}"
-                ;;
-    esac
-    shift
-done
-
-if [ -z "${SRC}" ]; then
-    SRC="adb"
-fi
-
-function blob_fixup() {
-    case "${1}" in
-    vendor/lib/libwvhidl.so | vendor/lib/mediadrm/libwvdrmengine.so | vendor/lib64/libwvhidl.so | vendor/lib64/mediadrm/libwvdrmengine.so)
-            "${PATCHELF}" --replace-needed "libcrypto.so" "libcrypto-v34.so" "${2}"
-            ;;
-    vendor/lib64/libvidhance.so|vendor/lib64/camera/components/com.vidhance.node.eis.so)
-            "${PATCHELF}" --add-needed "libc++demangle.so" "${2}"
-            "${PATCHELF}" --add-needed "libcomparetf2.so" "${2}"
-            ;;
-    vendor/lib64/camera/components/com.vidhance.stats.aec_dmbr.so)
-            "${PATCHELF}" --add-needed "libcomparetf2.so" "${2}"
-            ;;
-    vendor/lib64/hw/camera.qcom.so)
-            sed -i "s|libc++.so|libc29.so|g" "${2}"
-            ;;
-    vendor/bin/mlipayd@1.1 | vendor/lib64/libmlipay.so | vendor/lib64/libmlipay@1.1.so )
-        "${PATCHELF}" --remove-needed vendor.xiaomi.hardware.mtdservice@1.0.so "${2}"
-    ;;
-    system_ext/lib64/libwfdnative.so | system_ext/lib/libwfdnative.so | vendor/lib64/libgoodixhwfingerprint.so )
-        "${PATCHELF}" --remove-needed "android.hidl.base@1.0.so" "${2}"
-    ;;
-    vendor/etc/camera/camxoverridesettings.txt )
-        sed -i "s|0x10080|0|g" "${2}"
-        sed -i "s|0x1F|0x0|g" "${2}"
-    ;;
-    # Use VNDK 32 libhidlbase
-    vendor/lib64/libvendor.goodix.hardware.interfaces.biometrics.fingerprint@2.1.so)
-        "${PATCHELF_0_8}" --remove-needed "libhidlbase.so" "${2}"
-        sed -i "s/libhidltransport.so/libhidlbase-v32.so\x00/" "${2}"
-    ;;
-    vendor/lib64/mediadrm/libwvdrmengine.so | vendor/lib/mediadrm/libwvdrmengine.so | vendor/lib64/libwvhidl.so)
-         "${PATCHELF}"  --replace-needed "libprotobuf-cpp-lite-3.9.1.so" "libprotobuf-cpp-full-3.9.1.so" "${2}"
-    ;;
-    esac
+lib_fixups: lib_fixups_user_type = {
+    **lib_fixups,
+    (
+        'com.qualcomm.qti.dpm.api@1.0',
+        'libmmosal',
+        'vendor.qti.hardware.fm@1.0',
+        'vendor.qti.imsrtpservice@3.0',
+        'vendor.qti.hardware.wifidisplaysession@1.0',
+    ): lib_fixup_vendor_suffix,
+    (
+        'libwpa_client',
+    ): lib_fixup_remove,
 }
 
-# Initialize the helper for common device
-setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" true "${CLEAN_VENDOR}"
+# Define blob fix-ups specific to the device
+blob_fixups: blob_fixups_user_type = {
+    'vendor/lib/libwvhidl.so': blob_fixup()
+        .replace_needed('libcrypto.so', 'libcrypto-v34.so'),
+    'vendor/lib/mediadrm/libwvdrmengine.so': blob_fixup()
+        .replace_needed('libcrypto.so', 'libcrypto-v34.so'),
+    'vendor/lib64/libwvhidl.so': blob_fixup()
+        .replace_needed('libcrypto.so', 'libcrypto-v34.so'),
+    'vendor/lib64/mediadrm/libwvdrmengine.so': blob_fixup()
+        .replace_needed('libcrypto.so', 'libcrypto-v34.so'),
+    'vendor/lib64/libvidhance.so': blob_fixup()
+        .add_needed('libc++demangle.so')
+        .add_needed('libcomparetf2.so'),
+    'vendor/lib64/camera/components/com.vidhance.node.eis.so': blob_fixup()
+        .add_needed('libc++demangle.so')
+        .add_needed('libcomparetf2.so'),
+    'vendor/lib64/camera/components/com.vidhance.stats.aec_dmbr.so': blob_fixup()
+        .add_needed('libcomparetf2.so'),
+    'vendor/lib64/hw/camera.qcom.so': blob_fixup()
+        .regex_replace(r'libc\+\+\.so', 'libc29.so'),
+    'vendor/bin/mlipayd@1.1': blob_fixup()
+        .remove_needed('vendor.xiaomi.hardware.mtdservice@1.0.so'),
+    'vendor/lib64/libmlipay.so': blob_fixup()
+        .remove_needed('vendor.xiaomi.hardware.mtdservice@1.0.so'),
+    'vendor/lib64/libmlipay@1.1.so': blob_fixup()
+        .remove_needed('vendor.xiaomi.hardware.mtdservice@1.0.so'),
+    'system_ext/lib64/libwfdnative.so': blob_fixup()
+        .remove_needed('android.hidl.base@1.0.so'),
+    'system_ext/lib/libwfdnative.so': blob_fixup()
+        .remove_needed('android.hidl.base@1.0.so'),
+    'vendor/lib64/libgoodixhwfingerprint.so': blob_fixup()
+        .remove_needed('android.hidl.base@1.0.so'),
+    'vendor/etc/camera/camxoverridesettings.txt': blob_fixup()
+        .regex_replace(r'0x10080', '0')
+        .regex_replace(r'0x1F', '0x0'),
+    'vendor/lib64/libvendor.goodix.hardware.interfaces.biometrics.fingerprint@2.1.so': blob_fixup()
+        .remove_needed('libhidlbase.so')
+        .regex_replace(r'libhidltransport.so', 'libhidlbase-v32.so\x00'),
+    'vendor/lib64/mediadrm/libwvdrmengine.so': blob_fixup()
+        .replace_needed('libprotobuf-cpp-lite-3.9.1.so', 'libprotobuf-cpp-full-3.9.1.so'),
+    'vendor/lib/mediadrm/libwvdrmengine.so': blob_fixup()
+        .replace_needed('libprotobuf-cpp-lite-3.9.1.so', 'libprotobuf-cpp-full-3.9.1.so'),
+    'vendor/lib64/libwvhidl.so': blob_fixup()
+        .replace_needed('libprotobuf-cpp-lite-3.9.1.so', 'libprotobuf-cpp-full-3.9.1.so'),
+}
 
-extract "${MY_DIR}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+# Initialize the extraction module with device-specific configurations
+module = ExtractUtilsModule(
+    device='violet',
+    vendor='xiaomi',
+    blob_fixups=blob_fixups,
+    lib_fixups=lib_fixups,
+    namespace_imports=namespace_imports,
+)
 
-BLOB_ROOT="${ANDROID_ROOT}/vendor/${VENDOR}/${DEVICE}/proprietary"
-
-"${MY_DIR}/setup-makefiles.sh"
+if __name__ == '__main__':
+    utils = ExtractUtils.device(module)
+    utils.run()
