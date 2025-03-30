@@ -271,8 +271,6 @@ vendor/lib64/camera/components/com.qtistatic.stats.aec.so
 vendor/lib64/camera/components/com.qtistatic.stats.af.so
 vendor/lib64/camera/components/com.qtistatic.stats.awb.so
 vendor/lib64/camera/components/com.qtistatic.stats.pdlib.so
-vendor/lib64/camera/components/com.vidhance.node.eis.so
-vendor/lib64/camera/components/com.vidhance.stats.aec_dmbr.so
 vendor/lib64/camera/components/com.xiaomi.node.mibokeh.so
 vendor/lib64/camera/components/com.xiaomi.node.misegment.so
 vendor/lib64/camera/components/libdepthmapwrapper.so
@@ -320,7 +318,6 @@ vendor/lib64/libsnsdiaglog.so
 vendor/lib64/libswregistrationalgo.so
 vendor/lib64/libsymphony-cpu.so
 vendor/lib64/libsymphonypower.so
-vendor/lib64/libvidhance.so
 vendor/lib64/mibokeh_660_opencl.bin
 
 # Camera Firmware
@@ -529,6 +526,11 @@ vendor/bin/dspservice|a7344fc3d27a49df30858ebc3f73ee5818e752d4
 vendor/etc/init/vendor.qti.hardware.dsp@1.0-service.rc|fbf2bb38ca6bdddf98c7123da9e1f263a4eec55f
 vendor/etc/seccomp_policy/vendor.qti.hardware.dsp.policy|f060101b26d3674bb173e5fc95e118f56a8ac15d
 vendor/lib64/vendor.qti.hardware.dsp@1.0.so|223a9268bd92bd80dab3df02fbef38ea86bcbadd
+
+# EIS - from VIOLET_V12.5.4.0.QFHCNXM
+vendor/lib64/camera/components/com.vidhance.node.eis.so|123f97f7c6bd02552cf4bcf7a0b9e5d2a76a888e
+vendor/lib64/camera/components/com.vidhance.stats.aec_dmbr.so|2ea88db3607472df31e0da37f3cd190e67d031e8
+vendor/lib64/libvidhance.so|1f9fb3705a8947869aafa88d03ca34663766ad08
 
 # Fingerprint
 vendor/lib/vendor.qti.hardware.fingerprint@1.0.so
