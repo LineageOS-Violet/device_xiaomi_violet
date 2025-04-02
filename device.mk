@@ -303,6 +303,9 @@ PRODUCT_PACKAGES += \
     vendor.lineage.health-service.default
 
 # Media
+PRODUCT_PACKAGES += \
+    android.hardware.media.c2@1.0.vendor
+
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
     $(LOCAL_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml \
